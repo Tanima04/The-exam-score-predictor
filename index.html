@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Score Predictor</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --purple:#7c6ff7;--purple-dark:#5a54c4;--blue:#4fc3f7;--green:#4caf93;
+    --amber:#f5a623;--red:#e74c3c;--card:#fff;--bg:#f0f2ff;
+    --text:#1a1a2e;--muted:#6b7280;--border:#e5e7eb;
+  }
+  @media(prefers-color-scheme:dark){
+    :root{--card:#1e1e2e;--bg:#0d0d1a;--text:#e2e8f0;--muted:#94a3b8;--border:#2d2d44}
+  }
+  body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px}
+
+  /* Floating particles background */
+  .particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
+  .particle{position:absolute;border-radius:50%;opacity:.18;animation:floatUp linear infinite}
+  @keyframes floatUp{0%{transform:translateY(100vh) scale(0)}100%{transform:translateY(-20px) scale(1)}}
+
+  /* 3D scene wrapper */
+  .scene{perspective:1200px;width:100%;position:relative;z-index:1}
+  .app{max-width:720px;margin:0 auto;transform-style:preserve-3d;animation:floatIn .8s cubic-bezier(.22,1,.36,1) both}
+  @keyframes floatIn{from{opacity:0;transform:translateY(40px) rotateX(8deg)}to{opacity:1;transform:translateY(0) rotateX(0)}}
+
+  /* Header */
+  .header{text-align:center;padding:1.5rem 1rem 1rem}
+  .badge{display:inline-flex;align-items:center;gap:6px;background:var(--purple);color:#fff;font-size:.7rem;font-weight:500;padding:4px 12px;border-radius:20px;margin-bottom:8px;letter-spacing:.5px}
+  .header h1{font-size:clamp(1.3rem,4vw,1.8rem);font-weight:700;background:linear-gradient(135deg,var(--purple),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .header p{font-size:.85rem;color:var(--muted);margin-top:4px}
+
+  /* Nav */
+  .nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:1.5rem}
+  .nav-btn{padding:6px 16px;border-radius:20px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-size:.78rem;font-family:'Poppins',sans-serif;cursor:pointer;transition:all .25s}
+  .nav-btn.active,.nav-btn:hover{background:var(--purple);color:#fff;border-color:var(--purple);transform:translateY(-2px)}
+
+  /* Cards */
+  .card{background:var(--card);border-radius:20px;padding:1.5rem;border:1px solid var(--border);transition:transform .3s,box-shadow .3s;transform-style:preserve-3d;box-shadow:0 4px 20px rgba(124,111,247,.08)}
+  .card:hover{transform:translateY(-4px) rotateX(1deg);box-shadow:0 12px 40px rgba(124,111,247,.15)}
+  .card+.card{margin-top:1rem}
+
+  .section-title{font-size:.75rem;font-weight:600;color:var(--purple);letter-spacing:1px;text-transform:uppercase;margin-bottom:1rem}
+
+  /* Inputs */
+  .input-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}
+  .input-group{display:flex;flex-direction:column;gap:6px}
+  .input-group label{font-size:.78rem;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .input-group label i{font-size:15px;color:var(--purple)}
+  .input-group input[type=number]{padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:.9rem;font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);outline:none;transition:all .3s;width:100%}
+  .input-group input[type=number]:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(124,111,247,.15);transform:scale(1.02)}
+  .input-group input[type=number]::placeholder{color:var(--muted)}
+
+  /* Sliders */
+  .slider-wrap{display:flex;flex-direction:column;gap:4px}
+  .slider-row{display:flex;align-items:center;gap:10px}
+  .slider-row input[type=range]{flex:1;height:5px;accent-color:var(--purple);cursor:pointer}
+  .slider-val{font-size:.82rem;font-weight:600;color:var(--purple);min-width:36px;text-align:right}
+
+  /* Predict button */
+  .btn-predict{width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--purple),var(--blue));color:#fff;font-size:1rem;font-weight:600;font-family:'Poppins',sans-serif;cursor:pointer;transition:all .3s;margin-top:.75rem;position:relative;overflow:hidden;letter-spacing:.3px}
+  .btn-predict:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(124,111,247,.4)}
+  .btn-predict:active{transform:scale(.98)}
+  .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.3);transform:scale(0);animation:ripple .6s linear;pointer-events:none}
+  @keyframes ripple{to{transform:scale(4);opacity:0}}
+
+  /* Result area */
+  .result-area{display:none}
+  .result-area.visible{display:block;animation:slideUp .5s cubic-bezier(.22,1,.36,1) both}
+  @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+  /* Score ring */
+  .score-display{display:flex;align-items:center;justify-content:center;gap:2rem;flex-wrap:wrap;margin:1rem 0}
+  .score-ring{position:relative;width:140px;height:140px;flex-shrink:0}
+  .score-ring svg{transform:rotate(-90deg)}
+  .ring-bg{fill:none;stroke:var(--border);stroke-width:10}
+  .ring-fill{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dasharray 1.2s cubic-bezier(.22,1,.36,1),stroke .5s}
+  .score-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .score-num{font-size:2rem;font-weight:700;color:var(--text);line-height:1}
+  .score-label{font-size:.72rem;color:var(--muted);margin-top:2px}
+
+  /* Score info */
+  .score-info{flex:1;min-width:160px}
+  .grade-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:20px;font-size:.9rem;font-weight:700;margin-bottom:.75rem}
+  .progress-bars{display:flex;flex-direction:column;gap:10px}
+  .pbar-row{display:flex;flex-direction:column;gap:4px}
+  .pbar-label{font-size:.73rem;color:var(--muted);display:flex;justify-content:space-between}
+  .pbar-track{height:7px;background:var(--border);border-radius:10px;overflow:hidden}
+  .pbar-fill{height:100%;border-radius:10px;transition:width 1s cubic-bezier(.22,1,.36,1);width:0}
+
+  /* Stat cards */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:1rem}
+  .stat-card{background:var(--bg);border-radius:14px;padding:14px 12px;text-align:center;border:1px solid var(--border);transition:transform .25s}
+  .stat-card:hover{transform:translateY(-3px)}
+  .stat-icon{font-size:22px;margin-bottom:6px}
+  .stat-val{font-size:1.1rem;font-weight:700}
+  .stat-lbl{font-size:.7rem;color:var(--muted);margin-top:2px}
+
+  /* ── Responsive ── */
+  @media(max-width:480px){
+    body{padding:10px}
+    .score-display{gap:1rem}
+    .score-ring{width:120px;height:120px}
+    .score-num{font-size:1.6rem}
+    .input-grid{grid-template-columns:1fr}
+    .stats-grid{grid-template-columns:repeat(2,1fr)}
+    .card{padding:1.1rem}
+  }
+  @media(min-width:481px) and (max-width:767px){
+    .input-grid{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(min-width:768px){
+    body{padding:24px}
+    .header h1{font-size:2rem}
+    .input-grid{grid-template-columns:repeat(3,1fr)}
+  }
+  @media(min-width:1024px){
+    .app{max-width:800px}
+  }
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="scene">
+<div class="app">
+
+  <div class="header">
+    <div class="badge">
+      <i class="ti ti-chart-bar"></i> AI-Powered
+    </div>
+    <h1>Student Score Predictor</h1>
+    <p>Enter your stats and see your predicted performance</p>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active">Dashboard</button>
+    <button class="nav-btn">Students</button>
+    <button class="nav-btn">Reports</button>
+    <button class="nav-btn">Events</button>
+  </nav>
+
+  <div class="card">
+    <div class="section-title">Input Parameters</div>
+    <div class="input-grid">
+
+      <div class="input-group">
+        <label><i class="ti ti-clock"></i> Study Hours / Day</label>
+        <div class="slider-wrap">
+          <div class="slider-row">
+            <input type="range" min="0" max="12" value="6" step="0.5" id="hoursSlider" oninput="syncInput('hours','hoursSlider','hoursVal')">
+            <span class="slider-val" id="hoursVal">6</span>
+          </div>
+          <input type="number" id="hours" placeholder="e.g. 6" min="0" max="24" value="6" oninput="syncSlider('hours','hoursSlider','hoursVal')">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label><i class="ti ti-calendar"></i> Attendance %</label>
+        <div class="slider-wrap">
+          <div class="slider-row">
+            <input type="range" min="0" max="100" value="80" step="1" id="attendanceSlider" oninput="syncInput('attendance','attendanceSlider','attendanceVal')">
+            <span class="slider-val" id="attendanceVal">80</span>
+          </div>
+          <input type="number" id="attendance" placeholder="e.g. 80" min="0" max="100" value="80" oninput="syncSlider('attendance','attendanceSlider','attendanceVal')">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label><i class="ti ti-star"></i> Previous Marks %</label>
+        <div class="slider-wrap">
+          <div class="slider-row">
+            <input type="range" min="0" max="100" value="70" step="1" id="prevSlider" oninput="syncInput('previous','prevSlider','prevVal')">
+            <span class="slider-val" id="prevVal">70</span>
+          </div>
+          <input type="number" id="previous" placeholder="e.g. 70" min="0" max="100" value="70" oninput="syncSlider('previous','prevSlider','prevVal')">
+        </div>
+      </div>
+
+    </div>
+    <button class="btn-predict" onclick="predictScore(event)">
+      <i class="ti ti-bolt"></i> Predict My Score
+    </button>
+  </div>
+
+  <div class="result-area card" id="result"></div>
+
+</div>
+</div>
+
+<script>
+  function syncInput(inputId, sliderId, valId){
+    const v = document.getElementById(sliderId).value;
+    document.getElementById(inputId).value = v;
+    document.getElementById(valId).textContent = v;
+  }
+  function syncSlider(inputId, sliderId, valId){
+    const v = parseFloat(document.getElementById(inputId).value) || 0;
+    document.getElementById(sliderId).value = v;
+    document.getElementById(valId).textContent = v;
+  }
+
+  function predictScore(e){
+    const btn = e.currentTarget;
+    const r = document.createElement('span');
+    r.className = 'ripple';
+    const rect = btn.getBoundingClientRect();
+    r.style.cssText = `left:${e.clientX-rect.left-25}px;top:${e.clientY-rect.top-25}px;width:50px;height:50px`;
+    btn.appendChild(r);
+    setTimeout(() => r.remove(), 700);
+
+    const hours = parseFloat(document.getElementById('hours').value) || 0;
+    const att   = parseFloat(document.getElementById('attendance').value) || 0;
+    const prev  = parseFloat(document.getElementById('previous').value) || 0;
+
+    const raw = (hours/12)*30 + (att/100)*35 + (prev/100)*35;
+    const score = Math.min(100, Math.round(raw + (Math.random()*4 - 2)));
+
+    const {grade, color, emoji, msg} = getGrade(score);
+    const circ = 2 * Math.PI * 54;
+    const dash  = (score / 100) * circ;
+    const studyPct = Math.round(hours / 12 * 100);
+
+    const res = document.getElementById('result');
+    res.className = 'result-area card visible';
+    res.innerHTML = `
+      <div class="section-title">Prediction Result</div>
+      <div class="score-display">
+        <div class="score-ring">
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <circle class="ring-bg" cx="70" cy="70" r="54"/>
+            <circle class="ring-fill" id="ringFill" cx="70" cy="70" r="54"
+              stroke="${color}" stroke-dasharray="0 ${circ}"/>
+          </svg>
+          <div class="score-center">
+            <div class="score-num" id="scoreNum">0</div>
+            <div class="score-label">/ 100</div>
+          </div>
+        </div>
+        <div class="score-info">
+          <div class="grade-badge" style="background:${color}22;color:${color}">${emoji} Grade ${grade}</div>
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem">${msg}</p>
+          <div class="progress-bars">
+            <div class="pbar-row">
+              <div class="pbar-label"><span>Study Impact</span><span>${studyPct}%</span></div>
+              <div class="pbar-track"><div class="pbar-fill" id="pb1" style="background:#7c6ff7"></div></div>
+            </div>
+            <div class="pbar-row">
+              <div class="pbar-label"><span>Attendance</span><span>${att}%</span></div>
+              <div class="pbar-track"><div class="pbar-fill" id="pb2" style="background:#4fc3f7"></div></div>
+            </div>
+            <div class="pbar-row">
+              <div class="pbar-label"><span>Past Performance</span><span>${prev}%</span></div>
+              <div class="pbar-track"><div class="pbar-fill" id="pb3" style="background:#4caf93"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-val" style="color:#7c6ff7">${hours}h</div><div class="stat-lbl">Study / Day</div></div>
+        <div class="stat-card"><div class="stat-icon">🎯</div><div class="stat-val" style="color:#4fc3f7">${att}%</div><div class="stat-lbl">Attendance</div></div>
+        <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-val" style="color:#4caf93">${prev}%</div><div class="stat-lbl">Prev. Marks</div></div>
+        <div class="stat-card"><div class="stat-icon">${emoji}</div><div class="stat-val" style="color:${color}">${score}</div><div class="stat-lbl">Predicted</div></div>
+      </div>`;
+
+    res.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      document.getElementById('ringFill').style.strokeDasharray = `${dash} ${circ}`;
+      animateNum('scoreNum', 0, score, 1000);
+      setTimeout(() => { document.getElementById('pb1').style.width = studyPct + '%'; }, 200);
+      setTimeout(() => { document.getElementById('pb2').style.width = att + '%'; }, 350);
+      setTimeout(() => { document.getElementById('pb3').style.width = prev + '%'; }, 500);
+    }));
+
+    spawnParticles(color);
+  }
+
+  function getGrade(s){
+    if(s >= 90) return {grade:'A+', color:'#4caf93', emoji:'🏆', msg:"Outstanding performance! You're in the top tier."};
+    if(s >= 80) return {grade:'A',  color:'#4fc3f7', emoji:'⭐', msg:'Excellent work! Keep up this great momentum.'};
+    if(s >= 70) return {grade:'B',  color:'#7c6ff7', emoji:'👍', msg:"Good job! A little more effort and you'll excel."};
+    if(s >= 60) return {grade:'C',  color:'#f5a623', emoji:'📈', msg:'Satisfactory. Focus more on study hours & attendance.'};
+    if(s >= 40) return {grade:'D',  color:'#e67e22', emoji:'⚠️', msg:'Needs improvement. Try increasing study sessions.'};
+    return               {grade:'F',  color:'#e74c3c', emoji:'❗', msg:'Critical — seek help from teachers and study more.'};
+  }
+
+  function animateNum(id, from, to, dur){
+    const el = document.getElementById(id);
+    if(!el) return;
+    const start = performance.now();
+    function step(now){
+      const t = Math.min((now - start) / dur, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = Math.round(from + (to - from) * eased);
+      if(t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function spawnParticles(color){
+    const container = document.getElementById('particles');
+    for(let i = 0; i < 12; i++){
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.cssText = `
+        left:${Math.random()*100}%;
+        width:${6 + Math.random()*10}px;
+        height:${6 + Math.random()*10}px;
+        background:${color};
+        animation-duration:${3 + Math.random()*3}s;
+        animation-delay:${Math.random()}s;
+      `;
+      container.appendChild(p);
+      setTimeout(() => p.remove(), 6000);
+    }
+  }
+
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
